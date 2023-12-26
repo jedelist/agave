@@ -3,10 +3,13 @@ import sys
 import time
 import requests
 from skimage import color, io, transform
+from io import BytesIO
+from skimage.util import img_as_ubyte
 
 # Unsplash API settings
 API_KEY = 'YbznoIz1FAPwz5RMWJiRrQZKXw3n5tAR7vi6-6sJWfU'  # Access key
 API_URL = 'https://api.unsplash.com/photos/random'
+QUERY_TERMS = ['nature', 'animals'] # Can add if or change when needed (not implemented yet)
 QUERY_PARAMS = {'query': 'nature', 'count': 10}  # Query parameters
 
 # Directory settings
@@ -14,25 +17,29 @@ DATA_DIR = './data'
 COLOR_DIR = os.path.join(DATA_DIR, 'color')
 GRAYSCALE_DIR = os.path.join(DATA_DIR, 'grayscale')
 IMAGE_SIZE = 256  # Resize to 256x256 pixels
-MAX_REQUESTS_PER_HOUR = 50  # Maximum number of requests per hour
+MAX_REQUESTS_PER_HOUR = 50  # Maximum requests per hour from the unsplash API website
 SLEEP_TIME = 3600 / MAX_REQUESTS_PER_HOUR  # Time to sleep between requests
 
 def download_image(image_url, target_folder):
     response = requests.get(image_url, stream=True)
     if response.status_code == 200:
-        image = io.imread(response.content)
+        image = io.imread(BytesIO(response.content))
         return image
     return None
 
 def save_image(image, filename, target_folder):
     filepath = os.path.join(target_folder, filename)
-    io.imsave(filepath, image)
+    #io.imsave(filepath, image)
+    io.imsave(filepath, img_as_ubyte(image))
 
 def preprocess_image(image):
     image_resized = transform.resize(image, (IMAGE_SIZE, IMAGE_SIZE), anti_aliasing=True)
     image_lab = color.rgb2lab(image_resized)
-    grayscale_image = image_lab[:, :, 0]
+    grayscale_image = image_lab[:, :, 0] # Extract L channel
+
+    # Normalize L channel (grayscale image 0-1)
     grayscale_image = (grayscale_image - grayscale_image.min()) / (grayscale_image.max() - grayscale_image.min())
+    grayscale_3channel = color.gray2rgb(grayscale_image)  # Convert to 3 channel image so can be saved as JPEG
     return image_resized, grayscale_image
 
 def main():
@@ -57,10 +64,10 @@ def main():
                     print(f'Downloaded and processed image {total_downloaded + idx + 1}')
 
             total_downloaded += len(images)
-            time.sleep(SLEEP_TIME)  # Sleep to avoid surpassing the rate limit
+            time.sleep(SLEEP_TIME)  # Sleep to avoid exceeding the API download limit
         else:
             print(f'Error fetching images: {response.status_code}')
-            break  # Exit if there's an error in fetching images
+            break  # Exit if error fetching images
 
     log_file.close()
 
