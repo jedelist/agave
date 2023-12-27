@@ -1,9 +1,9 @@
 import os
 import sys
 import time
+from io import BytesIO
 import requests
 from skimage import color, io, transform
-from io import BytesIO
 from skimage.util import img_as_ubyte
 
 # Unsplash API settings

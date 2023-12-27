@@ -13,11 +13,12 @@ def create_colorization_model(input_shape):
 
     # Decoder
     model.add(Conv2D(32, (3, 3), activation='relu', padding='same'))
-    model.add(UpSampling2D((2, 2)))
+    model.add(UpSampling2D((2, 2)))         #bring the image back to 256x256
     # additional decoder 
 
-    model.add(Conv2D(2, (3, 3), activation='tanh', padding='same'))
-    model.add(UpSampling2D((2, 2)))
+    # Output layer with 3 channels for RGB output
+    model.add(Conv2D(3, (3, 3), activation='tanh', padding='same'))      #Maybe use tanh
+    #model.add(UpSampling2D((2, 2)))
 
     # Compile the model with loss function (mse)
     model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
