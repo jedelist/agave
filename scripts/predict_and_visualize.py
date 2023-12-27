@@ -58,11 +58,13 @@ def main():
         prediction = model.predict(grayscale_img)
         prediction = postprocess_prediction(prediction)
 
-        ground_truth_img = load_img(ground_truth_path, target_size=(256, 256))
-
-        plt.imsave(prediction_path, prediction)
-
-        visualize_results(load_img(grayscale_path, target_size=(256, 256)), prediction, ground_truth_img)
+        #exception handling if test image's gound truth counterpart is not found
+        try:
+            ground_truth_img = load_img(ground_truth_path, target_size=(256, 256))
+            plt.imsave(prediction_path, prediction)
+            visualize_results(load_img(grayscale_path, target_size=(256, 256)), prediction, ground_truth_img)
+        except FileNotFoundError:
+            print(f"Ground truth image not found for {file}, skipping.")
 
 if __name__ == '__main__':
     main()
